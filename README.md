@@ -2,26 +2,19 @@
 
 High-performance blob tracking that runs entirely in your browser. Built with vanilla JavaScript and optimized for real-time performance.
 
-**[🎯 Try it live](https://yourusername.github.io/web-blob-tracker/)**
+**[Try it live](https://nicholaspjm.github.io/web-blob-tracker/)**
 
-![Blob Tracker Demo](demo.png)
+
 
 ## Features
 
-- **Real-time tracking** - 60-120 FPS blob detection and visualization
-- **Catmull-Rom splines** - Smooth curved trails connecting tracked objects
-- **Connection networks** - Automatic linking between nearby blobs
-- **Corner brackets** - Tactical tracking aesthetic
-- **Dotted line mode** - Technical schematic style
-- **Full resolution** - High-quality detection at 1080p
-- **Privacy first** - Runs 100% locally in your browser, no data sent anywhere
-- **Zero installation** - Just open the page and start tracking
+TBD
 
 ## Usage
 
 ### Online
 
-Just visit the [live demo](https://yourusername.github.io/web-blob-tracker/) and click "toggle camera"
+Just visit the [live demo](https://nicholaspjm.github.io/web-blob-tracker/) and click "toggle camera"
 
 ### Local
 
@@ -107,13 +100,10 @@ This application:
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file
+N/A
 
 ## Credits
 
-Created by [Nick](https://github.com/yourusername) for [touch collective](https://touchcollective.com)
-
-Inspired by surveillance aesthetics, tactical HUDs, and real-time computer vision systems.
 
 ## Contributing
 
@@ -124,12 +114,4 @@ Issues and pull requests welcome! Ideas for improvements:
 - Additional tracking algorithms
 - Mobile optimization
 
-## Links
 
-- [Live Demo](https://yourusername.github.io/web-blob-tracker/)
-- [Report Bug](https://github.com/yourusername/web-blob-tracker/issues)
-- [Request Feature](https://github.com/yourusername/web-blob-tracker/issues)
-
----
-
-Made with touch collective
