@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>blob tracker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Space Mono', monospace; 
+            background: #f5f5f5; 
+            color: #000; 
+            overflow: hidden; 
+            font-size: 11px;
+        }
+        #container { display: flex; height: 100vh; }
+        #canvas-container { 
+            flex: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative; 
+            background: #fff;
+            border-right: 1px solid #000;
+        }
+        #videoCanvas { 
+            max-width: 100%; 
+            max-height: 100%; 
+            filter: contrast(1.05) saturate(0.95);
+        }
+        #controls { 
+            width: 240px; 
+            background: #f5f5f5; 
+            padding: 16px; 
+            overflow-y: auto;
+            border-left: 1px solid #000;
+        }
+        .control-group { 
+            margin-bottom: 16px; 
+            padding-bottom: 12px; 
+            border-bottom: 1px solid #ddd;
+        }
+        .control-group h3 { 
+            font-size: 10px; 
+            margin-bottom: 8px; 
+            text-transform: lowercase; 
+            font-weight: 700; 
+            opacity: 0.6;
+        }
+        label { 
+            display: block; 
+            margin-bottom: 4px; 
+            font-size: 9px; 
+            opacity: 0.7;
+            text-transform: lowercase;
+        }
+        input[type="range"] { 
+            width: 100%; 
+            margin-bottom: 8px; 
+            height: 2px; 
+            background: #ddd; 
+            outline: none; 
+            -webkit-appearance: none;
+            border: 1px solid #000;
+        }
+        input[type="range"]::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            width: 10px; 
+            height: 10px; 
+            background: #000; 
+            cursor: pointer; 
+            border-radius: 0;
+        }
+        input[type="range"]::-moz-range-thumb { 
+            width: 10px; 
+            height: 10px; 
+            background: #000; 
+            cursor: pointer; 
+            border-radius: 0;
+            border: none;
+        }
+        input[type="checkbox"] { 
+            margin-right: 6px; 
+            -webkit-appearance: none; 
+            width: 10px; 
+            height: 10px; 
+            border: 1px solid #000; 
+            background: #fff; 
+            cursor: pointer;
+        }
+        input[type="checkbox"]:checked { 
+            background: #000;
+        }
+        .checkbox-label { 
+            display: flex; 
+            align-items: center; 
+            margin-bottom: 6px; 
+            cursor: pointer; 
+            font-size: 10px;
+            opacity: 0.8;
+        }
+        .checkbox-label:hover { 
+            opacity: 1;
+        }
+        button { 
+            width: 100%; 
+            padding: 8px; 
+            background: #000; 
+            color: #fff; 
+            border: none;
+            cursor: pointer; 
+            font-family: 'Space Mono', monospace; 
+            text-transform: lowercase; 
+            margin-bottom: 8px; 
+            font-size: 10px;
+        }
+        button:hover { 
+            background: #333;
+        }
+        .value-display { 
+            display: inline-block; 
+            font-weight: 700; 
+            float: right; 
+            font-size: 9px;
+        }
+        #status { 
+            position: absolute; 
+            top: 12px; 
+            left: 12px; 
+            background: rgba(255, 255, 255, 0.9); 
+            padding: 8px 12px; 
+            border: 1px solid #000; 
+            font-size: 9px;
+        }
+        #fps { 
+            font-weight: 700;
+        }
+        .color-picker { 
+            width: 100%; 
+            height: 20px; 
+            border: 1px solid #000; 
+            cursor: pointer; 
+            margin-bottom: 8px; 
+            -webkit-appearance: none; 
+            padding: 0;
+        }
+        .info { 
+            font-size: 8px; 
+            opacity: 0.5; 
+            margin-top: 8px; 
+            line-height: 1.4;
+        }
+        /* Scrollbar styling */
+        #controls::-webkit-scrollbar {
+            width: 8px;
+        }
+        #controls::-webkit-scrollbar-track {
+            background: #e0e0e0;
+        }
+        #controls::-webkit-scrollbar-thumb {
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-container">
+            <canvas id="videoCanvas"></canvas>
+            <div id="status">
+                <div><span id="statusText">ready</span> / fps: <span id="fps">0</span> / blobs: <span id="blobCount">0</span></div>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <button id="toggleBtn">toggle camera</button>
+            
+            <div class="control-group">
+                <h3>detection</h3>
+                <label>threshold <span class="value-display" id="thresholdVal">127</span></label>
+                <input type="range" id="threshold" min="0" max="255" value="127">
+                <label>min area <span class="value-display" id="minAreaVal">10</span></label>
+                <input type="range" id="minArea" min="1" max="100" value="10">
+                <label>max area <span class="value-display" id="maxAreaVal">500</span></label>
+                <input type="range" id="maxArea" min="100" max="2000" value="500">
+                <label>max blobs <span class="value-display" id="maxBlobsVal">50</span></label>
+                <input type="range" id="maxBlobs" min="1" max="100" value="50">
+            </div>
+            
+            <div class="control-group">
+                <h3>performance</h3>
+                <label>resolution <span class="value-display" id="resScaleVal">1.00</span></label>
+                <input type="range" id="resScale" min="0.25" max="1" step="0.05" value="1.0">
+                <div class="checkbox-label"><input type="checkbox" id="enableSkip" checked><span>frame skip</span></div>
+            </div>
+            
+            <div class="control-group">
+                <h3>style</h3>
+                <label>outline</label>
+                <input type="color" id="outlineColor" value="#000000" class="color-picker">
+                <label>trail</label>
+                <input type="color" id="trailColor" value="#000000" class="color-picker">
+                <label>thickness <span class="value-display" id="thicknessVal">2</span></label>
+                <input type="range" id="thickness" min="1" max="5" value="2">
+                <div class="checkbox-label"><input type="checkbox" id="useBrackets" checked><span>brackets</span></div>
+                <div class="checkbox-label"><input type="checkbox" id="useDotted"><span>dotted</span></div>
+            </div>
+            
+            <div class="control-group">
+                <h3>features</h3>
+                <div class="checkbox-label"><input type="checkbox" id="drawTrails" checked><span>trails</span></div>
+                <div class="checkbox-label"><input type="checkbox" id="drawConnections" checked><span>connections</span></div>
+                <div class="checkbox-label"><input type="checkbox" id="showIds"><span>ids</span></div>
+                <div class="checkbox-label"><input type="checkbox" id="showMetrics"><span>metrics</span></div>
+                <div class="checkbox-label"><input type="checkbox" id="showGrid"><span>grid</span></div>
+            </div>
+            
+            <div class="control-group">
+                <h3>smoothing</h3>
+                <label>motion <span class="value-display" id="motionSmoothVal">0.5</span></label>
+                <input type="range" id="motionSmooth" min="0" max="1" step="0.1" value="0.5">
+                <label>line smoothness <span class="value-display" id="lineSmoothVal">8</span></label>
+                <input type="range" id="lineSmooth" min="2" max="16" value="8">
+            </div>
+            
+            <div class="info"><p>runs locally / no data sent</p><p>works offline</p></div>
+        </div>
+    </div>
+    <script>
+const canvas=document.getElementById('videoCanvas'),ctx=canvas.getContext('2d',{willReadFrequently:!0});let video=null,stream=null,animationId=null,lastFrameTime=0,fps=0,frameCount=0,blobs=[],prevBlobs=[],isTracking=!1;const config={threshold:127,minArea:10,maxArea:500,maxBlobs:50,resolutionScale:1.0,enableSkip:!0,outlineColor:'#000000',trailColor:'#000000',thickness:2,useBrackets:!0,useDotted:!1,drawTrails:!0,drawConnections:!0,showIds:!1,showMetrics:!1,showGrid:!1,motionSmoothing:.5,lineSmoothing:8};function hexToRgb(h){const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);return r?{r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)}:{r:0,g:0,b:0}}function distance(p1,p2){return Math.sqrt((p2.x-p1.x)**2+(p2.y-p1.y)**2)}function interpolateCatmullRom(centers,resolution){if(centers.length<4)return centers;const result=[],basisMatrix=[[0,2,0,0],[-1,0,1,0],[2,-5,4,-1],[-1,3,-3,1]];for(let i=1;i<centers.length-2;i++){const p=[centers[i-1],centers[i],centers[i+1],centers[i+2]];for(let j=0;j<resolution;j++){const t=j/resolution,t2=t*t,t3=t2*t,T=[1,t,t2,t3];let x=0,y=0;for(let k=0;k<4;k++){let mx=0,my=0;for(let m=0;m<4;m++){mx+=basisMatrix[k][m]*p[m].x;my+=basisMatrix[k][m]*p[m].y}x+=0.5*T[k]*mx;y+=0.5*T[k]*my}result.push({x:Math.round(x),y:Math.round(y)})}}return result}function detectBlobs(imageData){const w=imageData.width,h=imageData.height,d=imageData.data,bin=new Uint8Array(w*h);for(let i=0;i<d.length;i+=4)bin[i/4]=(d[i]+d[i+1]+d[i+2])/3>config.threshold?1:0;const lbl=new Int32Array(w*h);let lc=0;const bd=[];for(let y=0;y<h;y++)for(let x=0;x<w;x++){const idx=y*w+x;if(bin[idx]===1&&lbl[idx]===0){lc++;const b=floodFill(bin,lbl,w,h,x,y,lc);if(b.area>=config.minArea&&b.area<=config.maxArea)bd.push(b)}}bd.sort((a,b)=>b.area-a.area);return bd.slice(0,config.maxBlobs)}function floodFill(bin,lbl,w,h,sx,sy,l){const stk=[[sx,sy]];let a=0,sumX=0,sumY=0,minX=sx,maxX=sx,minY=sy,maxY=sy;while(stk.length>0){const[x,y]=stk.pop(),idx=y*w+x;if(x<0||x>=w||y<0||y>=h)continue;if(bin[idx]!==1||lbl[idx]!==0)continue;lbl[idx]=l;a++;sumX+=x;sumY+=y;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);stk.push([x+1,y],[x-1,y],[x,y+1],[x,y-1])}return{x:sumX/a,y:sumY/a,area:a,minX,maxX,minY,maxY,width:maxX-minX,height:maxY-minY}}function matchBlobs(cur,prv){if(prv.length===0)return cur;const matched=[],used=new Set();for(const c of cur){let bm=null,bd=Infinity;for(let i=0;i<prv.length;i++){if(used.has(i))continue;const p=prv[i],d=distance(c,p);if(d<bd&&d<100){bd=d;bm=i}}if(bm!==null){used.add(bm);const p=prv[bm],a=.3;matched.push({...c,x:a*c.x+(1-a)*p.x,y:a*c.y+(1-a)*p.y,vx:(c.x-p.x)||0,vy:(c.y-p.y)||0,id:p.id})}else matched.push({...c,vx:0,vy:0,id:Math.random()})}return matched}function drawDottedLine(ctx,x1,y1,x2,y2,thickness){const d=Math.sqrt((x2-x1)**2+(y2-y1)**2);if(d===0)return;const dx=(x2-x1)/d,dy=(y2-y1)/d,gap=8,dl=gap/2;let cd=0;while(cd<d){const sx=x1+dx*cd,sy=y1+dy*cd,ed=Math.min(cd+dl,d),ex=x1+dx*ed,ey=y1+dy*ed;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();cd+=gap}}function drawBrackets(ctx,x,y,w,h,col,th){const bl=Math.min(w,h)*.3;ctx.strokeStyle=col;ctx.lineWidth=th;ctx.beginPath();ctx.moveTo(x,y+bl);ctx.lineTo(x,y);ctx.lineTo(x+bl,y);ctx.stroke();ctx.beginPath();ctx.moveTo(x+w-bl,y);ctx.lineTo(x+w,y);ctx.lineTo(x+w,y+bl);ctx.stroke();ctx.beginPath();ctx.moveTo(x,y+h-bl);ctx.lineTo(x,y+h);ctx.lineTo(x+bl,y+h);ctx.stroke();ctx.beginPath();ctx.moveTo(x+w-bl,y+h);ctx.lineTo(x+w,y+h);ctx.lineTo(x+w,y+h-bl);ctx.stroke()}function processFrame(){if(!video||video.readyState!==video.HAVE_ENOUGH_DATA){animationId=requestAnimationFrame(processFrame);return}const now=performance.now();if(now-lastFrameTime>0)fps=1000/(now-lastFrameTime);lastFrameTime=now;canvas.width=video.videoWidth;canvas.height=video.videoHeight;ctx.drawImage(video,0,0);const sc=config.resolutionScale,pw=Math.floor(canvas.width*sc),ph=Math.floor(canvas.height*sc),tc=document.createElement('canvas');tc.width=pw;tc.height=ph;const tctx=tc.getContext('2d');tctx.drawImage(video,0,0,pw,ph);const imgData=tctx.getImageData(0,0,pw,ph);frameCount++;const sd=!config.enableSkip||frameCount%2===0;if(sd){blobs=detectBlobs(imgData);blobs.forEach(b=>{b.x*=(1/sc);b.y*=(1/sc);b.minX*=(1/sc);b.maxX*=(1/sc);b.minY*=(1/sc);b.maxY*=(1/sc);b.width*=(1/sc);b.height*=(1/sc)});blobs=matchBlobs(blobs,prevBlobs);prevBlobs=blobs}const orgb=hexToRgb(config.outlineColor),trgb=hexToRgb(config.trailColor),ocol=`rgb(${orgb.r},${orgb.g},${orgb.b})`,tcol=`rgb(${trgb.r},${trgb.g},${trgb.b})`;if(config.showGrid){ctx.strokeStyle=`rgba(${orgb.r},${orgb.g},${orgb.b},0.3)`;ctx.lineWidth=1;for(let x=0;x<canvas.width;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()}for(let y=0;y<canvas.height;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()}}if(config.drawConnections&&blobs.length>1){const as=blobs.reduce((s,b)=>s+b.area,0)/blobs.length,cd=Math.sqrt(as)*3;ctx.strokeStyle=ocol;ctx.lineWidth=Math.max(1,Math.floor(config.thickness*0.5));for(let i=0;i<blobs.length;i++)for(let j=i+1;j<blobs.length;j++){const d=distance(blobs[i],blobs[j]);if(d<cd){if(config.useDotted)drawDottedLine(ctx,blobs[i].x,blobs[i].y,blobs[j].x,blobs[j].y,ctx.lineWidth);else{ctx.beginPath();ctx.moveTo(blobs[i].x,blobs[i].y);ctx.lineTo(blobs[j].x,blobs[j].y);ctx.stroke()}}}}if(config.drawTrails&&blobs.length>=2){let trail=blobs.map(b=>({x:b.x,y:b.y}));if(trail.length>=4){trail=interpolateCatmullRom(trail,config.lineSmoothing)}if(trail.length>=2){ctx.strokeStyle=tcol;ctx.lineWidth=1;if(config.useDotted){for(let i=0;i<trail.length-1;i++){drawDottedLine(ctx,trail[i].x,trail[i].y,trail[i+1].x,trail[i+1].y,1)}}else{ctx.beginPath();ctx.moveTo(trail[0].x,trail[0].y);for(let i=1;i<trail.length;i++){ctx.lineTo(trail[i].x,trail[i].y)}ctx.stroke()}}}blobs.forEach((b,i)=>{const x=b.minX,y=b.minY,w=b.width,h=b.height;if(config.useBrackets)drawBrackets(ctx,x,y,w,h,ocol,config.thickness);else{ctx.strokeStyle=ocol;ctx.lineWidth=config.thickness;ctx.strokeRect(x,y,w,h)}if(config.showIds){ctx.fillStyle=ocol;ctx.font='10px Space Mono';ctx.fillText(`${i}`,x,y-4)}});if(config.showMetrics){ctx.fillStyle=ocol;ctx.font='9px Space Mono';ctx.fillText('data',10,20);blobs.forEach((b,i)=>{const xn=(b.x/canvas.width).toFixed(2),yn=(b.y/canvas.height).toFixed(2),sp=Math.sqrt((b.vx||0)**2+(b.vy||0)**2).toFixed(1),tx=`${i} / ${xn},${yn} / ${sp} / ${Math.floor(b.area)}`;ctx.fillText(tx,10,35+i*12)})}document.getElementById('fps').textContent=Math.round(fps);document.getElementById('blobCount').textContent=blobs.length;animationId=requestAnimationFrame(processFrame)}async function startCamera(){try{stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720}}});video=document.createElement('video');video.srcObject=stream;video.autoplay=!0;video.playsInline=!0;video.onloadedmetadata=()=>{document.getElementById('statusText').textContent='tracking';isTracking=!0;processFrame()}}catch(err){alert('camera access denied: '+err.message);document.getElementById('statusText').textContent='error'}}function stopCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if(animationId){cancelAnimationFrame(animationId);animationId=null}video=null;ctx.clearRect(0,0,canvas.width,canvas.height);document.getElementById('statusText').textContent='ready';document.getElementById('fps').textContent='0';document.getElementById('blobCount').textContent='0';isTracking=!1}document.getElementById('toggleBtn').addEventListener('click',()=>{if(isTracking)stopCamera();else startCamera()});const ctrls={threshold:'threshold',minArea:'minArea',maxArea:'maxArea',maxBlobs:'maxBlobs',resScale:'resolutionScale',thickness:'thickness',motionSmooth:'motionSmoothing',lineSmooth:'lineSmoothing'};Object.entries(ctrls).forEach(([id,ck])=>{const el=document.getElementById(id),ds=document.getElementById(id+'Val');el.addEventListener('input',e=>{const v=parseFloat(e.target.value);config[ck]=v;ds.textContent=v.toFixed(2)})});const chks={enableSkip:'enableSkip',useBrackets:'useBrackets',useDotted:'useDotted',drawTrails:'drawTrails',drawConnections:'drawConnections',showIds:'showIds',showMetrics:'showMetrics',showGrid:'showGrid'};Object.entries(chks).forEach(([id,ck])=>{document.getElementById(id).addEventListener('change',e=>{config[ck]=e.target.checked})});document.getElementById('outlineColor').addEventListener('input',e=>{config.outlineColor=e.target.value});document.getElementById('trailColor').addEventListener('input',e=>{config.trailColor=e.target.value});
+    </script>
+</body>
+</html>
