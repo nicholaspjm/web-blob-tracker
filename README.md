@@ -2,7 +2,7 @@
 
 High-performance blob tracking that runs entirely in your browser. Built with vanilla JavaScript and optimized for real-time performance.
 
-**[🎯 Try it live](https://yourusername.github.io/blob-tracker/)**
+**[🎯 Try it live](https://yourusername.github.io/web-blob-tracker/)**
 
 ![Blob Tracker Demo](demo.png)
 
@@ -21,7 +21,7 @@ High-performance blob tracking that runs entirely in your browser. Built with va
 
 ### Online
 
-Just visit the [live demo](https://yourusername.github.io/blob-tracker/) and click "toggle camera"
+Just visit the [live demo](https://yourusername.github.io/web-blob-tracker/) and click "toggle camera"
 
 ### Local
 
@@ -126,9 +126,9 @@ Issues and pull requests welcome! Ideas for improvements:
 
 ## Links
 
-- [Live Demo](https://yourusername.github.io/blob-tracker/)
-- [Report Bug](https://github.com/yourusername/blob-tracker/issues)
-- [Request Feature](https://github.com/yourusername/blob-tracker/issues)
+- [Live Demo](https://yourusername.github.io/web-blob-tracker/)
+- [Report Bug](https://github.com/yourusername/web-blob-tracker/issues)
+- [Request Feature](https://github.com/yourusername/web-blob-tracker/issues)
 
 ---
 
